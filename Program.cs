@@ -1,4 +1,6 @@
 ﻿using System.Numerics;
+using Silk.FirstSteps.Components;
+using Silk.FirstSteps.Objects;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -9,84 +11,29 @@ namespace Silk.FirstSteps
 	class Program
 	{
 		private static IWindow window;
-		private static GL Gl;
+		public static GL Gl;
 		private static IKeyboard primaryKeyboard;
-
-		private static BufferObject<float> Vbo;
-		private static BufferObject<uint> Ebo;
-		private static VertexArrayObject<float, uint> Vao;
-		private static Texture Texture;
-		private static Shader Shader;
-
-		//Setup the camera's location, directions, and movement speed
-		private static Vector3 CameraPosition = new Vector3(0.0f, 0.0f, 3.0f);
-		private static Vector3 CameraFront = new Vector3(0.0f, 0.0f, -1.0f);
-		private static Vector3 CameraUp = Vector3.UnitY;
-		private static Vector3 CameraDirection = Vector3.Zero;
-		private static float CameraYaw = -90f;
-		private static float CameraPitch = 0f;
-		private static float CameraZoom = 45f;
-
-		//Used to track change in mouse movement to allow for moving of the Camera
 		private static Vector2 LastMousePosition;
 
-		private static readonly float[] Vertices =
-		{
-            //X    Y      Z     U   V
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-			 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-			 0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
-			 0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
-			-0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		private static Lamp lamp;
+		private static Lamp lamp1;
+		private static Lamp lamp2;
+		private static Lamp lamp3;
 
-			-0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
-			 0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-			-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-			-0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
+		private static Objects.Plane Floor;
+		private static Sphere Sphere;
 
-			-0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-			-0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
-			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-			-0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
-			-0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-
-			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-			 0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
-			 0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-			 0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-			 0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
-			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-
-			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-			 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-			 0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
-			 0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
-			-0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
-			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-			-0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
-			 0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
-			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-			-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-			-0.5f,  0.5f, -0.5f,  0.0f, 0.0f
-		};
-
-		private static readonly uint[] Indices =
-		{
-			0, 1, 3,
-			1, 2, 3
-		};
-
+		private static Camera camera;
 		private static void Main (string[] args)
 		{
 			var options = WindowOptions.Default;
-			options.Size = new Vector2D<int>(800, 600);
-			options.Title = "LearnOpenGL with Silk.NET";
+			options.PreferredDepthBufferBits = 24;
+			options.Samples = 16;
+			options.Title = "My first game engine";
+			options.VSync = true;
+			options.Size = new(1920, 1080);
+			options.WindowBorder = WindowBorder.Hidden;
+			options.WindowState = WindowState.Fullscreen;
 			window = Window.Create(options);
 
 			window.Load += OnLoad;
@@ -102,6 +49,10 @@ namespace Silk.FirstSteps
 
 		private static void OnLoad ()
 		{
+			Gl = GL.GetApi(window);
+			Shader.Gl = Gl;
+			Gl.Enable(EnableCap.Multisample);
+
 			IInputContext input = window.CreateInput();
 			primaryKeyboard = input.Keyboards.FirstOrDefault();
 			if ( primaryKeyboard != null )
@@ -115,116 +66,106 @@ namespace Silk.FirstSteps
 				input.Mice[i].Scroll += OnMouseWheel;
 			}
 
-			Gl = GL.GetApi(window);
+			camera = new Camera(new(0f, 1f, 5f), (float) window.Size.X/ window.Size.Y);
 
-			Ebo = new BufferObject<uint>(Gl, Indices, BufferTargetARB.ElementArrayBuffer);
-			Vbo = new BufferObject<float>(Gl, Vertices, BufferTargetARB.ArrayBuffer);
-			Vao = new VertexArrayObject<float, uint>(Gl, Vbo, Ebo);
+			lamp = new Lamp(Gl, new(0f,0f,255f));
+			lamp.Transform.Scale = 0.2f;
 
-			Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, 5, 0);
-			Vao.VertexAttributePointer(1, 2, VertexAttribPointerType.Float, 5, 3);
+			lamp1 = new Lamp(Gl, new(255f, 0f, 0f));
+			lamp1.Transform.Scale = 0.2f;
 
-			Shader = new Shader(Gl, "shader.vert", "shader.frag");
+			lamp2 = new Lamp(Gl, new(0f, 255f, 0f));
+			lamp2.Transform.Scale = 0.2f;
 
-			Texture = new Texture(Gl, "silk.png");
+			lamp3 = new Lamp(Gl, new(255f, 255f, 255f));
+			lamp3.Transform.Scale = 0.2f;
+
+			Floor = new Objects.Plane(Gl);
+			Floor.Transform.Position -= Vector3.UnitY;
+
+			Sphere = new Sphere(Gl, 0.5f);
 		}
 
-		private static void OnUpdate (double deltaTime)
+		private static unsafe void OnUpdate (double deltaTime)
 		{
 			var moveSpeed = 2.5f * (float) deltaTime;
 
 			if ( primaryKeyboard.IsKeyPressed(Key.W) )
 			{
 				//Move forwards
-				CameraPosition += moveSpeed * CameraFront;
+				camera.Transform.Position += moveSpeed * camera.Transform.Direction;
 			}
 			if ( primaryKeyboard.IsKeyPressed(Key.S) )
 			{
 				//Move backwards
-				CameraPosition -= moveSpeed * CameraFront;
+				camera.Transform.Position -= moveSpeed * camera.Transform.Direction;
 			}
 			if ( primaryKeyboard.IsKeyPressed(Key.A) )
 			{
 				//Move left
-				CameraPosition -= Vector3.Normalize(Vector3.Cross(CameraFront, CameraUp)) * moveSpeed;
+				camera.Transform.Position -= Vector3.Normalize(Vector3.Cross(camera.Transform.Direction, Vector3.UnitY)) * moveSpeed;
 			}
 			if ( primaryKeyboard.IsKeyPressed(Key.D) )
 			{
 				//Move right
-				CameraPosition += Vector3.Normalize(Vector3.Cross(CameraFront, CameraUp)) * moveSpeed;
+				camera.Transform.Position += Vector3.Normalize(Vector3.Cross(camera.Transform.Direction, Vector3.UnitY)) * moveSpeed;
 			}
+
+			lamp.Transform.Position = Vector3.UnitX;
+			lamp1.Transform.Position = -Vector3.UnitX;
+			lamp2.Transform.Position = Vector3.UnitZ;
+			lamp3.Transform.Position = -Vector3.UnitZ;
 		}
 
 		private static unsafe void OnRender (double deltaTime)
 		{
+			Gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 			Gl.Enable(EnableCap.DepthTest);
-			Gl.Clear((uint) (ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+			Gl.Enable(EnableCap.CullFace);
+			Gl.CullFace(TriangleFace.Back);
 
-			Vao.Bind();
-			Texture.Bind();
-			Shader.Use();
-			Shader.SetUniform("uTexture0", 0);
+			var floorModel = Floor.Transform.ModelMatrix;
+			var view = camera.ViewMatrix;
+			var projection = camera.ProjectionMatrix;
 
-			//Use elapsed time to convert to radians to allow our cube to rotate over time
-			var difference = (float) (window.Time * 100);
-
-			var size = window.FramebufferSize;
-
-			var model = Matrix4x4.CreateRotationY(MathHelper.DegreesToRadians(difference)) * Matrix4x4.CreateRotationX(MathHelper.DegreesToRadians(difference));
-			var view = Matrix4x4.CreateLookAt(CameraPosition, CameraPosition + CameraFront, CameraUp);
-			var projection = Matrix4x4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(CameraZoom), (float) size.X / size.Y, 0.1f, 100.0f);
-
-			Shader.SetUniform("uModel", model);
-			Shader.SetUniform("uView", view);
-			Shader.SetUniform("uProjection", projection);
-
-			//We're drawing with just vertices and no indices, and it takes 36 vertices to have a six-sided textured cube
-			Gl.DrawArrays(PrimitiveType.Triangles, 0, 36);
+			lamp.Render(Gl, camera, Array.Empty<LightSource>());
+			lamp1.Render(Gl, camera, Array.Empty<LightSource>());
+			lamp2.Render(Gl, camera, Array.Empty<LightSource>());
+			lamp3.Render(Gl, camera, Array.Empty<LightSource>());
+			Floor.Render(Gl, camera, [lamp.light, lamp1.light, lamp2.light, lamp3.light]);
+			Sphere.Render(Gl, camera, [lamp.light, lamp1.light, lamp2.light, lamp3.light]);
 		}
 
 		private static void OnFramebufferResize (Vector2D<int> newSize)
 		{
 			Gl.Viewport(newSize);
+			camera.AspectRatio = (float)newSize.X / newSize.Y;
 		}
 
 		private static unsafe void OnMouseMove (IMouse mouse, Vector2 position)
 		{
-			var lookSensitivity = 0.1f;
-			if ( LastMousePosition == default ) { LastMousePosition = position; }
+			float sensivity = 0.1f;
+			if ( LastMousePosition == default )
+			{
+				LastMousePosition = position;
+			}
 			else
 			{
-				var xOffset = (position.X - LastMousePosition.X) * lookSensitivity;
-				var yOffset = (position.Y - LastMousePosition.Y) * lookSensitivity;
+				float xOffset = (position.X - LastMousePosition.X) * sensivity;
+				float yOffset = (position.Y - LastMousePosition.Y) * sensivity;
 				LastMousePosition = position;
-
-				CameraYaw += xOffset;
-				CameraPitch -= yOffset;
-
-				//We don't want to be able to look behind us by going over our head or under our feet so make sure it stays within these bounds
-				CameraPitch = Math.Clamp(CameraPitch, -89.0f, 89.0f);
-
-				CameraDirection.X = MathF.Cos(MathHelper.DegreesToRadians(CameraYaw)) 
-					* MathF.Cos(MathHelper.DegreesToRadians(CameraPitch));
-				CameraDirection.Y = MathF.Sin(MathHelper.DegreesToRadians(CameraPitch));
-				CameraDirection.Z = MathF.Sin(MathHelper.DegreesToRadians(CameraYaw)) 
-					* MathF.Cos(MathHelper.DegreesToRadians(CameraPitch));
-				CameraFront = Vector3.Normalize(CameraDirection);
+				camera.ModifyDirection(xOffset, yOffset);
 			}
 		}
 
 		private static unsafe void OnMouseWheel (IMouse mouse, ScrollWheel scrollWheel)
 		{
-			//We don't want to be able to zoom in too close or too far away so clamp to these values
-			CameraZoom = Math.Clamp(CameraZoom - scrollWheel.Y, 1.0f, 45f);
+
 		}
 
 		private static void OnClose ()
 		{
-			Vbo.Dispose();
-			Ebo.Dispose();
-			Vao.Dispose();
-			Shader.Dispose();
-			Texture.Dispose();
+
 		}
 
 		private static void KeyDown (IKeyboard keyboard, Key key, int arg3)

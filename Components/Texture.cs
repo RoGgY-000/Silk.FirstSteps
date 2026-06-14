@@ -1,4 +1,5 @@
-﻿using Silk.NET.OpenGL;
+﻿using Silk.NET.Assimp;
+using Silk.NET.OpenGL;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -9,10 +10,14 @@ namespace Silk.FirstSteps
 		private uint _handle;
 		private GL _gl;
 
-		public unsafe Texture (GL gl, string path)
+		public string Path { get; set; }
+		public TextureType Type { get; }
+
+		public unsafe Texture (GL gl, string path, TextureType type = TextureType.None)
 		{
 			_gl = gl;
-
+			Path = path;
+			Type = type;
 			_handle = _gl.GenTexture();
 			Bind();
 
