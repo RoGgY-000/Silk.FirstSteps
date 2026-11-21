@@ -5,9 +5,11 @@ namespace Silk.FirstSteps.Components
 	public class LightSource : Component
 	{
 		public Vector3 LightColor { get; set; }
-		public float Ambient { get; set; }
-		public float Diffuse { get; set; }
-		public float Specular { get; set; }
+		public float Ambient => BrightnessModifiers.X * Brightness;
+		public float Diffuse => BrightnessModifiers.Y * Brightness;
+		public float Specular => BrightnessModifiers.Z * Brightness;
+		public float Brightness { get; set; }
+		public Vector3 BrightnessModifiers { get; set; }
 		public Vector3 Attenuation { get; set; }
 		public Vector3 LightPosition
 		{
@@ -15,13 +17,12 @@ namespace Silk.FirstSteps.Components
 			set;
 		}
 
-		public LightSource (Vector3 color, float ambient, float diffuse, float specular, Vector3 position)
+		public LightSource (Vector3 color, Vector3 position)
 		{
 			LightColor = color;
-			Ambient = ambient;
-			Diffuse = diffuse;
-			Specular = specular;
 			LightPosition = position;
+			Brightness = 2f;
+			BrightnessModifiers = new(0.2f, 0.5f, 0.3f);
 		}
 	}
 }

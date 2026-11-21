@@ -13,7 +13,7 @@ namespace Silk.FirstSteps.Objects
 		{
 			model = new Model(gl, "../net10.0/Assets/cube.model");
 			model.Shader = new Shader("../net10.0/Graphics/Shaders/shader.vert", "../net10.0/Graphics/Shaders/shader.frag");
-			light = new LightSource(new(255f, 255f, 255f), 0.2f, 0.75f, 0.5f, Vector3.Zero);
+			light = new LightSource(new(255f, 255f, 255f), Vector3.Zero);
 			light.Attenuation = new(1.0f, 0.09f, 0.032f);
 			light.gameObject = this;
 		}

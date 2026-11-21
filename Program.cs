@@ -19,6 +19,7 @@ namespace Silk.FirstSteps
 		private static Lamp lamp1;
 		private static Lamp lamp2;
 		private static Lamp lamp3;
+		private static Lamp Sun;
 
 		private static Objects.Plane Floor;
 		private static Sphere Sphere;
@@ -80,6 +81,11 @@ namespace Silk.FirstSteps
 			lamp3 = new Lamp(Gl, new(255f, 255f, 255f));
 			lamp3.Transform.Scale = 0.2f;
 
+			Sun = new Lamp(Gl, new(255f, 255f, 200f));
+			Sun.light.Brightness = 300f;
+			Sun.Transform.Position = new(25f);
+			Sun.Transform.Scale = 2f;
+
 			Floor = new Objects.Plane(Gl);
 			Floor.Transform.Position -= Vector3.UnitY;
 
@@ -132,8 +138,9 @@ namespace Silk.FirstSteps
 			lamp1.Render(Gl, camera, Array.Empty<LightSource>());
 			lamp2.Render(Gl, camera, Array.Empty<LightSource>());
 			lamp3.Render(Gl, camera, Array.Empty<LightSource>());
-			Floor.Render(Gl, camera, [lamp.light, lamp1.light, lamp2.light, lamp3.light]);
-			Sphere.Render(Gl, camera, [lamp.light, lamp1.light, lamp2.light, lamp3.light]);
+			Sun.Render(Gl, camera, Array.Empty<LightSource>());
+			Floor.Render(Gl, camera, [lamp.light, lamp1.light, lamp2.light, lamp3.light, Sun.light]);
+			Sphere.Render(Gl, camera, [lamp.light, lamp1.light, lamp2.light, lamp3.light, Sun.light]);
 		}
 
 		private static void OnFramebufferResize (Vector2D<int> newSize)
